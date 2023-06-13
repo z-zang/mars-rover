@@ -1,255 +1,139 @@
-import { clear, print, askQuestion } from './ui/console';
-import { MAX_AMOUNT_OF_ROVERS } from './config';
+import { clear, print, prompt } from './ui/console';
+import { MAX_AMOUNT_OF_ROVERS, EXPECTED_NUM_OF_COORDS } from './config';
+import { processRoverInstruct, getOtherRoversCoordsArray, checkIsWithinGrid, checkDoesNotClashWithRovers } from './utils/utils';
 import {
-	Direction,
-	Instruct,
-	Rotation,
 	Position,
-	Coords,
-	Rover,
 	MarsRover,
 	isDirection,
 	VALID_DIRECTIONS,
-	VALID_INSTRUCTS,
-	VALID_ROTATIONS,
 	marsRoverData
 } from './types';
 
+import messages from './messages';
 
 export const marsRoverStart = (): void => {
 	clear(false);
-	print('--------------------------');
-	print('| Welcome to Mars Rover |');
-	print('--------------------------');
+	print('-----------------------------------');
+	print('|      Welcome to Mars Rover      |');
+	print('-----------------------------------');
 
-	const startText = `Please enter the upper-right co-ordinates of the plateau, 
-	represented by 2 integers, eg: 5 5`
-
-	askQuestion(startText, checkGridCoordinates);
+	prompt(messages.marsRoverStart.success, checkGridCoordinates, false);
 }
 
-const checkGridCoordinates = (gridCoordInput: string): void => {
+export const checkGridCoordinates = (gridCoordInput: string): void => {
 	const gridCoords: string[] = gridCoordInput.split(' ');
 	const gridCoordsRegex = /^\d+$/;
+	const isValidCoordFormat = gridCoords.every((str) => gridCoordsRegex.test(str))
+	const isAboveZero = gridCoords.every((str) => Number(str) > 0)
 
-	const isValidGridCoords: Boolean = gridCoords.length === 2
-		&& gridCoordsRegex.test(gridCoords[0]) && gridCoordsRegex.test(gridCoords[1]);
+	const isValidGridCoords = gridCoords.length === EXPECTED_NUM_OF_COORDS && isValidCoordFormat && isAboveZero
 	
-	if (isValidGridCoords) {
-		const plateauCoordsArr = gridCoords.map(coord => Number(coord))
-		marsRoverData.plateauCoords.x = plateauCoordsArr[0];
-		marsRoverData.plateauCoords.y = plateauCoordsArr[1];
-
-		const successPromptText = `Valid co-ordinates received. For the first rover, please enter: 
-			\n - the starting co-ordinates, represented by 2 integers 
-			\n - and the cardinal position it's facing, represented by either N | S | W | E. 
-			\nEg: 1 2 N`
-
-
-		askQuestion(successPromptText, checkRoverCoordinates, marsRoverData);
-
-	} else {
-		const failPromptText = `Invalid input detected. Please try again.`
-		askQuestion(failPromptText, checkGridCoordinates);
+	if (!isValidGridCoords) {
+		return prompt(messages.checkGridCoordinates.failure, checkGridCoordinates);
 	}
 	
+	const gridCoordsArr = gridCoords.map(coord => Number(coord))
+
+	marsRoverData.gridCoords = {
+		x: gridCoordsArr[0],
+		y: gridCoordsArr[1]
+	}
+
+	prompt(messages.checkGridCoordinates.succcess, checkNewRoverCoordinates);
 }
-// TODO: currently, marsROverdata includes itself
-const isNonClashingRoverCoord = (roverCoord: Coords, plateauCoords: Coords, roversArr: Rover[]): boolean => {
-	const {x: roverCoordX, y: roverCoordY} = roverCoord;
-	console.log('rovercoord',roverCoord)
-	
-	const coordsToCompare = [plateauCoords]
 
-	if (marsRoverData.rovers.length > 0) {
-		const otherRoverCoords: Position[] = roversArr.map((rover) => rover.positionArr[rover.positionArr.length - 1])
-		coordsToCompare.push(...otherRoverCoords)
+export const checkNewRoverCoordinates = (roverCoordInput: string): void => {
+	const roverCoords: string[] = roverCoordInput.split(' ');
+	const roverCoordRegex = /^[0-9]+ [0-9]+ [NSWE]$/;
+	const isValidRoverCoordFormat: boolean = roverCoordRegex.test(roverCoordInput);
+
+	if (!isValidRoverCoordFormat) {
+		return prompt(messages.checkRoverCoordinates.failure, checkNewRoverCoordinates);
 	}
 
-	console.log('coordsToCompare', coordsToCompare)
+	const [roverCoordX, roverCoordY ]: number[] = roverCoords.slice(0, 2).map(coord => Number(coord))
+	const roverDirection = isDirection(roverCoords[2]) // for type safety
 
-	const isValidRoverCoord = coordsToCompare.every((coord) => {
-		return !(roverCoordX === coord.x && roverCoordY === coord.y)
+	const roverPosition = {
+		x: roverCoordX, 
+		y: roverCoordY, 
+		bearing: roverDirection
+	}
+
+	const otherRoversCoordsArray = marsRoverData.rovers.map(rover => rover.positionArr.slice(-1)[0])
+	const isWithinGrid = checkIsWithinGrid(roverPosition, marsRoverData.gridCoords)
+	const doesNotClashWithRovers = checkDoesNotClashWithRovers(roverPosition, otherRoversCoordsArray)
+
+	if (!(isWithinGrid && doesNotClashWithRovers)) {
+		const failurePromptText = messages.processRoverCoordinates.failure
+		return prompt(failurePromptText, checkNewRoverCoordinates);
+	}
+	
+	processRoverCoordinates(roverPosition);
+}
+
+export const processRoverCoordinates = (roverPosition: Position): void => {
+	const roverCurrentIndex = marsRoverData.rovers.length + 1 
+
+	const roverName = `rover-${roverCurrentIndex}`
+	marsRoverData.rovers.push({
+		name: roverName,
+		positionArr: [{...roverPosition}]
 	})
 
-	const isPositiveCoord = roverCoordX >= 0 && roverCoordY >= 0
-
-	const isWithinPlateau = roverCoordX <= plateauCoords.x && roverCoordY <= plateauCoords.y
-
-	return isValidRoverCoord && isPositiveCoord && isWithinPlateau
+	const successPromptText = messages.processRoverCoordinates.success
+	const callbackCheckRoverDirections = (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverName, marsRoverData)
+	
+	prompt(successPromptText, callbackCheckRoverDirections);
 }
 
-const checkRoverCoordinates = (roverCoordInput: string) => {
-	console.log('roverCoordInput', roverCoordInput)
-	const roverCoords: string[] = roverCoordInput.split(' ');
-
-	// todo: extract NSWE into string, put into config file, 
-	// create regex by using constructor and passing in dynamic variable
-
-	const roverCoordRegex = /^[0-9]+ [0-9]+ [NSWE]$/;
-
-	const isValidRoverCoordFormat: boolean = roverCoordRegex.test(roverCoordInput) 
-
-	if (isValidRoverCoordFormat) {
-		// console.log('isValidRoverCoords (in terms of format)', isValidRoverInput)
-		const [roverCoordX, roverCoordY ]: number[] = roverCoords.slice(0, 2).map(coord => Number(coord))
-		const roverDirection = isDirection(roverCoords[2])
-
-		const isValidRoverCoord = isNonClashingRoverCoord({x:roverCoordX, y:roverCoordY }, marsRoverData.plateauCoords, marsRoverData.rovers)
-
-		if (isValidRoverCoord) {
-			// todo: move away from zero indexed array
-			const roverCurrentIndex = marsRoverData.rovers.length + 1 // breaks if starting with non 0 arr.
-
-			marsRoverData.rovers.push({
-				name: `rover-${roverCurrentIndex}`,
-				positionArr: [{
-					x: roverCoordX, 
-					y: roverCoordY, 
-					bearing: roverDirection
-				}]
-			})
-
-			console.log('marsRoverIndex', roverCurrentIndex)
-
-			// ask for 3rd input
-			console.log('coords in bounds')
-			console.log('marsRoverData', marsRoverData)
-
-			const successPromptText = `Valid co-ordinates received. For the first rover, please enter the directions you would like it to travel in, represented by instructions L, R, or M.
-			\nEg: LMLMLRMMMRMRMLMR`
-
-			askQuestion(successPromptText, (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverCurrentIndex, marsRoverData) , marsRoverData);
-
-		} else {
-			// TODO: error logging of exact co-ordinate
-			const failurePromptText = `invalid rover coords - out of bounds, or clashes with another rover. please try again`
-
-			askQuestion(failurePromptText, checkRoverCoordinates, marsRoverData);
-		}
-	} else {
-		const failurePromptText = `invalid rover coords format. please try again`
-
-		askQuestion(failurePromptText, checkRoverCoordinates, marsRoverData);
-	}
-}
-
-export const checkRoverDirections = (roverInstructInput: string, roverCurrentIndex: number, marsRoverData: MarsRover): void => {
-	const roverInputRegex = /^[LMR]+$/;
-	const isValidRoverInstructFormat = roverInputRegex.test(roverInstructInput);
+export const checkRoverDirections = (roverInstructInput: string, roverName: string, marsRoverData: MarsRover): void => {
+	const roverDirectionRegex = /^[LMR]+$/;
+	const isValidRoverInstructFormat = roverDirectionRegex.test(roverInstructInput);
 
 	if (!isValidRoverInstructFormat) {
-		const failurePromptText = `invalid rover direction input. please try again`
+		const failurePromptText = messages.checkRoverDirections.failure
+		const callbackCheckRoverDirections = (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverName, marsRoverData)
+		return prompt(failurePromptText, callbackCheckRoverDirections);
+	} 
+	
+	processRoverDirections(roverInstructInput, roverName, marsRoverData)
+}
 
-		askQuestion(failurePromptText, (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverCurrentIndex, marsRoverData), marsRoverData);
+export const processRoverDirections = (roverInstructInput: string, roverName: string, marsRoverData: MarsRover) => {
+	try {
+		const selectedRover = marsRoverData.rovers.find((rover) => rover.name === roverName) || marsRoverData.rovers[0] // ????
 
+		const newRoverPosition = processRoverInstruct(roverInstructInput, selectedRover, marsRoverData, VALID_DIRECTIONS);
+		
+		selectedRover.positionArr.push(newRoverPosition);
+
+		console.log('marsRoverData FINALLL', marsRoverData.rovers[0])
+	} catch (error) {
+		const failurePromptText = messages.processRoverDirections.failure
+		const retry = (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverName, marsRoverData)
+		prompt(failurePromptText, retry);
+	}
+
+	if (marsRoverData.rovers.length !== MAX_AMOUNT_OF_ROVERS) {
+		const successPromptText = messages.processRoverDirections.success
+		prompt(successPromptText, checkNewRoverCoordinates);
 	} else {
-		try {
-			const newRoverPosition = processRoverInstruct(roverInstructInput, marsRoverData);
-			console.log('newRoverPosition', newRoverPosition);
-
-			let currentRover = marsRoverData.rovers[roverCurrentIndex - 1]
-			console.log('currentRover', currentRover)
-
-			marsRoverData.rovers[roverCurrentIndex - 1].positionArr.push(newRoverPosition);
-
-			if (marsRoverData.rovers.length === MAX_AMOUNT_OF_ROVERS) {
-				// return all data, finish program
-				clear(true);
-				console.log('Maximum amount of rovers added. Final co-ordinates:')
-				marsRoverData.rovers.forEach(rover => {
-					const {x, y, bearing} = rover.positionArr[rover.positionArr.length -1 ]
-					print(`${x} ${y} ${bearing}`)
-				})
-
-			} else {
-				const successPromptText = `Valid co-ordinates received. For the next rover, please enter: 
-				\n - the starting co-ordinates.`
-	
-				askQuestion(successPromptText, checkRoverCoordinates, marsRoverData);
-			}
-
-		} catch (error) {
-			const outOfBoundsPromptText = `rover instructions have caused it to go out of bounds or clash with another rover. please try inputting directions again.`
-	
-			askQuestion(outOfBoundsPromptText, (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverCurrentIndex, marsRoverData) , marsRoverData);
-		}
-
+		printFinalRoverData(marsRoverData);
 	}
 }
 
+export const printFinalRoverData = (marsRoverData: MarsRover): void => {
+	clear(true);
+	print(messages.printFinalRoverData.success);
 
-export const processRoverInstruct = (roverInstructInput: string, marsRoverData: MarsRover): Position => {
-	const roverStartPosition = marsRoverData.rovers[0].positionArr.slice(-1)[0] // access last element in arr
-	let currentCoords = { x: roverStartPosition.x, y: roverStartPosition.y }
-	let currentBearing = roverStartPosition.bearing;
-	const roversToCompare = marsRoverData.rovers.filter(rover => {
-		return rover.positionArr[rover.positionArr.length - 1] !== roverStartPosition // works because it's same reference
-	})
-	
-	roverInstructInput.split('').forEach((letter)=> {
-		console.log('currentCoords', currentCoords)
-
-		switch(letter) {
-			case 'L':
-				currentBearing = processRotation(letter, currentBearing);
-				break;
-			case 'R':
-				currentBearing = processRotation(letter, currentBearing);
-				break;
-			case 'M':
-				currentCoords = processMovement(currentCoords, currentBearing)
-				const isNonClashingCoord = isNonClashingRoverCoord(currentCoords, marsRoverData.plateauCoords, roversToCompare);
-
-				console.log('isNonClashingCoord', isNonClashingCoord)
-				if (!isNonClashingCoord) {
-					throw new Error('FAILED - ROVER OUT OF BOUNDS, OR CLASHES WITH ANOTHER ROVER')
-				}
-		  }
+	marsRoverData.rovers.forEach(rover => {
+		const {x, y, bearing} = rover.positionArr[rover.positionArr.length -1 ]
+		print(`${x} ${y} ${bearing}`)
 	})
 
-	return {
-		...currentCoords,
-		bearing: currentBearing
-	}
-}
-
-export const processRotation = (rotation: Rotation, currentBearing: Direction): Direction => {
-	const bearingStartingIndex = VALID_DIRECTIONS.indexOf(currentBearing)
-	let bearingNextIndex: number;
-
-	if (rotation === 'R') {
-		// rotate clockwise
-		bearingNextIndex = bearingStartingIndex + 1
-	} else { 
-		// rotate antiClockwise
-		bearingNextIndex = bearingStartingIndex -1
-	}
-
-	// if index circles past array, apply correction
-	if (bearingNextIndex === 4) { bearingNextIndex = 0}
-	if (bearingNextIndex === -1) { bearingNextIndex = 3}
-
-	return VALID_DIRECTIONS[bearingNextIndex];
-}
-export const processMovement = (currentCoords: Coords, currentBearing: Direction): Coords => {
-	let processedCoords = currentCoords;
-
-	switch(currentBearing) {
-		case 'N':
-			processedCoords.y +=1
-			break;
-		case 'E':
-			processedCoords.x +=1
-			break;
-		case 'S':
-			processedCoords.y -=1
-			break;
-		case 'W':
-			processedCoords.x -=1
-			break;
-	}
-	return processedCoords;
+	process.exit();
+	process.exit();
 }
 
 
