@@ -63,12 +63,19 @@ export const checkDoesNotClashWithRovers = (roverCoord: Coords, roversCoordsToCo
 }
 
 export const processRoverInstruct = (roverInstructInput: string, selectedRover: Rover, marsRoverData: MarsRover, VALID_DIRECTIONS: readonly Direction[]): Position => {
+	console.log('roverInstructInput', roverInstructInput)
+	console.log('selectedRover', selectedRover)
+	console.log('marsRoverData', marsRoverData)
+	console.log('marsRoverData.rovers', marsRoverData.rovers)
+	console.log('marsRoverData.rovers', marsRoverData.rovers[0].positionArr)
 	const roverStartPosition = selectedRover.positionArr.slice(-1)[0]
 	let currentCoords = { x: roverStartPosition.x, y: roverStartPosition.y }
 	let currentBearing = roverStartPosition.bearing;
 
 	const roversCoordsToCompare = getOtherRoversCoordsArray(selectedRover, marsRoverData.rovers)
 	
+	console.log('roversCoordsToCompare', roversCoordsToCompare)
+
 	roverInstructInput.split('').forEach((letter)=> {
 		console.log('current', currentCoords , currentBearing)
 		console.log('letter', letter)
@@ -82,10 +89,13 @@ export const processRoverInstruct = (roverInstructInput: string, selectedRover: 
 			case 'M':
 				currentCoords = processMovement(currentCoords, currentBearing);
 
-				const isValidCoord = checkIsWithinGrid(currentCoords, marsRoverData.gridCoords);
+				const isWithinGrid = checkIsWithinGrid(currentCoords, marsRoverData.gridCoords);
 				const doesNotClashWithRovers = checkDoesNotClashWithRovers(currentCoords, roversCoordsToCompare);
-				if (!(isValidCoord && doesNotClashWithRovers)) {
-					throw new Error(messages.processRoverInstruct.error)
+				if (!isWithinGrid) {
+					throw new Error(messages.processRoverInstruct.invalidCoord)
+				}
+				if (!doesNotClashWithRovers) {
+					throw new Error(messages.processRoverInstruct.roverClash)
 				}
 		  }
 	})

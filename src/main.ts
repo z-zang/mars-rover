@@ -1,6 +1,6 @@
 import { clear, print, prompt } from './ui/console';
 import { MAX_AMOUNT_OF_ROVERS, EXPECTED_NUM_OF_COORDS } from './config';
-import { processRoverInstruct, getOtherRoversCoordsArray, checkIsWithinGrid, checkDoesNotClashWithRovers } from './utils/utils';
+import { processRoverInstruct, checkIsWithinGrid, checkDoesNotClashWithRovers } from './utils/utils';
 import {
 	Position,
 	MarsRover,
@@ -23,12 +23,12 @@ export const marsRoverStart = (): void => {
 export const checkGridCoordinates = (gridCoordInput: string): void => {
 	const gridCoords: string[] = gridCoordInput.split(' ');
 	const gridCoordsRegex = /^\d+$/;
+
 	const isValidCoordFormat = gridCoords.every((str) => gridCoordsRegex.test(str))
 	const isAboveZero = gridCoords.every((str) => Number(str) > 0)
-
-	const isValidGridCoords = gridCoords.length === EXPECTED_NUM_OF_COORDS && isValidCoordFormat && isAboveZero
+	const isExpectedNumOfCoords = gridCoords.length === EXPECTED_NUM_OF_COORDS
 	
-	if (!isValidGridCoords) {
+	if (!(isValidCoordFormat && isAboveZero && isExpectedNumOfCoords)) {
 		return prompt(messages.checkGridCoordinates.failure, checkGridCoordinates);
 	}
 	
@@ -52,8 +52,8 @@ export const checkNewRoverCoordinates = (roverCoordInput: string): void => {
 	}
 
 	const [roverCoordX, roverCoordY ]: number[] = roverCoords.slice(0, 2).map(coord => Number(coord))
-	const roverDirection = isDirection(roverCoords[2]) // for type safety
-
+	const roverDirection = isDirection(roverCoords[2]) // typescript raised an error re. type safety!
+	
 	const roverPosition = {
 		x: roverCoordX, 
 		y: roverCoordY, 
@@ -69,13 +69,13 @@ export const checkNewRoverCoordinates = (roverCoordInput: string): void => {
 		return prompt(failurePromptText, checkNewRoverCoordinates);
 	}
 	
-	processRoverCoordinates(roverPosition);
+	processNewRoverCoordinates(roverPosition);
 }
 
-export const processRoverCoordinates = (roverPosition: Position): void => {
+export const processNewRoverCoordinates = (roverPosition: Position): void => {
 	const roverCurrentIndex = marsRoverData.rovers.length + 1 
-
 	const roverName = `rover-${roverCurrentIndex}`
+
 	marsRoverData.rovers.push({
 		name: roverName,
 		positionArr: [{...roverPosition}]
@@ -101,25 +101,27 @@ export const checkRoverDirections = (roverInstructInput: string, roverName: stri
 }
 
 export const processRoverDirections = (roverInstructInput: string, roverName: string, marsRoverData: MarsRover) => {
-	try {
-		const selectedRover = marsRoverData.rovers.find((rover) => rover.name === roverName) || marsRoverData.rovers[0] // ????
-
-		const newRoverPosition = processRoverInstruct(roverInstructInput, selectedRover, marsRoverData, VALID_DIRECTIONS);
+	try {							
+		// added fallback value as Typescript throws an error, even though the element will definitely be in the object
+		const selectedRover = marsRoverData.rovers.find((rover) => rover.name === roverName) || marsRoverData.rovers[0] 
 		
+		const newRoverPosition = processRoverInstruct(roverInstructInput, selectedRover, marsRoverData, VALID_DIRECTIONS);
 		selectedRover.positionArr.push(newRoverPosition);
 
-		console.log('marsRoverData FINALLL', marsRoverData.rovers[0])
+		if (marsRoverData.rovers.length !== MAX_AMOUNT_OF_ROVERS) {
+			const successPromptText = messages.processRoverDirections.success
+			prompt(successPromptText, checkNewRoverCoordinates);
+		} else {
+			printFinalRoverData(marsRoverData);
+		}
+
 	} catch (error) {
-		const failurePromptText = messages.processRoverDirections.failure
+		let errorMessage = ''
+		if (error instanceof Error) errorMessage = error.message
+
+		const failurePromptText = messages.processRoverDirections.failure(errorMessage)
 		const retry = (roverInstructInput: string) => checkRoverDirections(roverInstructInput, roverName, marsRoverData)
 		prompt(failurePromptText, retry);
-	}
-
-	if (marsRoverData.rovers.length !== MAX_AMOUNT_OF_ROVERS) {
-		const successPromptText = messages.processRoverDirections.success
-		prompt(successPromptText, checkNewRoverCoordinates);
-	} else {
-		printFinalRoverData(marsRoverData);
 	}
 }
 
@@ -133,8 +135,6 @@ export const printFinalRoverData = (marsRoverData: MarsRover): void => {
 	})
 
 	process.exit();
-	process.exit();
 }
-
 
 marsRoverStart();

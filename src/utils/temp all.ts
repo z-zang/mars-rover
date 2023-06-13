@@ -1,5 +1,31 @@
 // helper function file
 
+export const marsRoverDataTest: MarsRover = {
+	gridCoords: {
+		x: 0,
+		y: 0
+	},
+	rovers: [
+		{
+			name: 'rover-1',
+			positionArr: [
+				{x: 10, y: 10, bearing: 'N'},
+				{x: 11, y: 11, bearing: 'N'},
+				{x: 12, y: 12, bearing: 'S'}
+			]
+		},
+		{
+			name: 'rover-2',
+			positionArr: [
+				{x: 20, y: 20, bearing: 'N'},
+				{x: 21, y: 21, bearing: 'N'},
+				{x: 22, y: 22, bearing: 'S'}
+			]
+		},
+	]
+}
+
+
 import { Rotation, Direction, Position, Coords, Rover, MarsRover } from "../types";
 import messages from "../messages";
 
