@@ -1,5 +1,5 @@
-import { VALID_DIRECTIONS } from '../../types';
-
+import { MarsRover, Rover, VALID_DIRECTIONS } from '../../types';
+import { default as msg } from '../../messages';
 import { 
     processRotation, 
     processMovement,
@@ -90,7 +90,7 @@ describe("getOtherRoversCoordsArray function", () => {
             ]
         },
     ]
-    let selectedRover = { 
+    let selectedRover: Rover = { 
         name: 'rover-3',
         positionArr: [
             {x: 3, y: 4, bearing: VALID_DIRECTIONS[1]},
@@ -113,7 +113,7 @@ describe("getOtherRoversCoordsArray function", () => {
 
 
 describe("processRoverInstruct function", () => {
-    const data = {
+    const data: MarsRover = {
         gridCoords: {
             x: 10,
             y: 10
@@ -144,8 +144,12 @@ describe("processRoverInstruct function", () => {
     it("should return updated co-ordinates after processing valid directions for selectedRover", () => {
         expect(processRoverInstruct('LLLRRMMLMMM', data.rovers[0], data, VALID_DIRECTIONS)).toStrictEqual({bearing: 'S', x: 6, y: 3})
     });
-    it("should throw error if at any point, the rover moves out of bounds", () => {
-        expect(() => processRoverInstruct('MMMMM', data.rovers[1], data, VALID_DIRECTIONS)).toThrow('FAILED - ROVER OUT OF BOUNDS')
-        expect(() => processRoverInstruct('LRRMMMMM', data.rovers[0], data, VALID_DIRECTIONS)).toThrow('FAILED - ROVER OUT OF BOUNDS')
+    it("should throw specific error if the rover moves out of bounds", () => {
+        expect(() => processRoverInstruct('LRRMMMMM', data.rovers[0], data, VALID_DIRECTIONS)).toThrow(msg.processRoverInstruct.invalidCoord)
+        expect(() => processRoverInstruct('MMMMM', data.rovers[1], data, VALID_DIRECTIONS)).toThrow(msg.processRoverInstruct.invalidCoord)
+    });
+    it("should throw specific error if the rover clashes with other rover", () => {
+        expect(() => processRoverInstruct('LLMMMRMMMMMM', data.rovers[0], data, VALID_DIRECTIONS)).toThrow(msg.processRoverInstruct.roverClash)
+        expect(() => processRoverInstruct('RRMMMRMMMMMM', data.rovers[1], data, VALID_DIRECTIONS)).toThrow(msg.processRoverInstruct.roverClash)
     });
 });

@@ -1,26 +1,64 @@
-import { VALID_DIRECTIONS } from '../../types';
-
+import * as ui from '../../ui/console';
+import { default as msg } from '../../messages';
 import checkRoverDirections from '../../steps/04_checkRoverDirections';
+import processRoverDirections from '../../steps/05_processRoverDirections';
+import { MarsRover } from '../../types';
+
+const mockPrompt = jest.spyOn(ui, 'prompt').mockImplementation(() => {})
+jest.mock('../../steps/05_processRoverDirections', () => jest.fn());
+
+const { invalidFormat } = msg.checkRoverDirections;
+
+const marsTestData: MarsRover = {
+	gridCoords: {
+		x: 10,
+		y: 10
+	},
+    rovers: [
+		{
+			name: 'rover-1',
+			positionArr: [
+				{x: 5, y: 5, bearing: 'N'},
+			]
+		},
+    ]
+}
+
+afterEach(() => {    
+    jest.clearAllMocks();
+});
 
 describe("checkRoverDirections function", () => {
-    /**
-    if incorrect format: 
-        it should call: return prompt(msg.checkRoverDirections.failure, checkRoverDirections, roverName, marsRoverData);
+    describe('should call prompt() with expected args when passed invalid string, with invalidFormat message, itself as fn(), and unmodified data', () => {
+        it("alphabetic string", () => {
+            checkRoverDirections('asdfghjkl', marsTestData.rovers[0].name, marsTestData)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(invalidFormat, checkRoverDirections, marsTestData.rovers[0].name, marsTestData)
+        });
+        it("numbers, whitespace, and other symbols", () => {
+            checkRoverDirections(' 1238$£(*^@ 3{]342 34', marsTestData.rovers[0].name, marsTestData)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(invalidFormat, checkRoverDirections, marsTestData.rovers[0].name, marsTestData)
+        });
+        it("lowercase", () => {
+            checkRoverDirections('rmlmrlmlrrmmrlml', marsTestData.rovers[0].name, marsTestData)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(invalidFormat, checkRoverDirections, marsTestData.rovers[0].name, marsTestData)
+        });
+    })
 
-    if correct format: 
-	    it should call return processRoverDirections(roverInstructInput, roverName, marsRoverData)
-
-    
-    */
-
-    it("should return correct directional string after applying rotation", () => {
-    //     expect(processRotation('L', 'N', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('L', 'W', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('L', 'S', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('L', 'E', VALID_DIRECTIONS)).toBe('N');
-    //     expect(processRotation('R', 'N', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('R', 'E', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('R', 'S', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('R', 'W', VALID_DIRECTIONS)).toBe('N');
-    });
+    describe('should call processRoverDirections() with expected args when passed valid string, with user input, rovername, and unmodified data', () => {
+        it("example 1", () => {
+            checkRoverDirections('LMLMRRMLRMLMRL', marsTestData.rovers[0].name, marsTestData)
+            expect(mockPrompt).toHaveBeenCalledTimes(0)
+            expect(processRoverDirections).toHaveBeenCalledTimes(1)
+            expect(processRoverDirections).toHaveBeenCalledWith('LMLMRRMLRMLMRL', marsTestData.rovers[0].name, marsTestData)
+        });
+        it("example 2", () => {
+            checkRoverDirections('MMMRMLMRRRRMRMLM', marsTestData.rovers[0].name, marsTestData)
+            expect(mockPrompt).toHaveBeenCalledTimes(0)
+            expect(processRoverDirections).toHaveBeenCalledTimes(1)
+            expect(processRoverDirections).toHaveBeenCalledWith('MMMRMLMRRRRMRMLM', marsTestData.rovers[0].name, marsTestData)
+        });
+    })
 });

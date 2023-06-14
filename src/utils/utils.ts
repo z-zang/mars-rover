@@ -1,7 +1,7 @@
 // helper function file
 
 import { Rotation, Direction, Position, Coords, Rover, MarsRover } from "../types";
-import messages from "../messages";
+import { default as msg} from "../messages";
 
 export const getOtherRoversCoordsArray = (selectedRover: Rover, roversArr: Rover[]): Coords[] => {
 	const otherRovers = roversArr.filter((rover => rover.name !== selectedRover.name))
@@ -63,22 +63,13 @@ export const checkDoesNotClashWithRovers = (roverCoord: Coords, roversCoordsToCo
 }
 
 export const processRoverInstruct = (roverInstructInput: string, selectedRover: Rover, marsRoverData: MarsRover, VALID_DIRECTIONS: readonly Direction[]): Position => {
-	console.log('roverInstructInput', roverInstructInput)
-	console.log('selectedRover', selectedRover)
-	console.log('marsRoverData', marsRoverData)
-	console.log('marsRoverData.rovers', marsRoverData.rovers)
-	console.log('marsRoverData.rovers', marsRoverData.rovers[0].positionArr)
 	const roverStartPosition = selectedRover.positionArr.slice(-1)[0]
 	let currentCoords = { x: roverStartPosition.x, y: roverStartPosition.y }
 	let currentBearing = roverStartPosition.bearing;
 
 	const roversCoordsToCompare = getOtherRoversCoordsArray(selectedRover, marsRoverData.rovers)
 	
-	console.log('roversCoordsToCompare', roversCoordsToCompare)
-
 	roverInstructInput.split('').forEach((letter)=> {
-		console.log('current', currentCoords , currentBearing)
-		console.log('letter', letter)
 		switch(letter) {
 			case 'L':
 				currentBearing = processRotation(letter, currentBearing, VALID_DIRECTIONS);
@@ -92,10 +83,10 @@ export const processRoverInstruct = (roverInstructInput: string, selectedRover: 
 				const isWithinGrid = checkIsWithinGrid(currentCoords, marsRoverData.gridCoords);
 				const doesNotClashWithRovers = checkDoesNotClashWithRovers(currentCoords, roversCoordsToCompare);
 				if (!isWithinGrid) {
-					throw new Error(messages.processRoverInstruct.invalidCoord)
+					throw new Error(msg.processRoverInstruct.invalidCoord)
 				}
 				if (!doesNotClashWithRovers) {
-					throw new Error(messages.processRoverInstruct.roverClash)
+					throw new Error(msg.processRoverInstruct.roverClash)
 				}
 		  }
 	})

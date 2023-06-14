@@ -12,7 +12,7 @@ const processNewRoverCoords = (roverPosition: Position, marsRoverData: MarsRover
 		positionArr: [{...roverPosition}]
 	})
 
-	return prompt(msg.processRoverCoords.success, checkRoverDirections, roverName, marsRoverData);
+	prompt(msg.processRoverCoords.success, checkRoverDirections, roverName, marsRoverData);
 }
 
 export default processNewRoverCoords

@@ -5,7 +5,6 @@ import { MarsRover } from "../types";
 import { EXPECTED_NUM_OF_COORDS } from "../config";
 
 const checkGridCoords = (gridCoordInput: string, marsRoverData: MarsRover): void => {
-	// const EXPECTED_NUM_OF_COORDS = 2
 	const gridCoords: string[] = gridCoordInput.split(' ');
 	const gridCoordsRegex = /^\d+$/;
 
@@ -14,7 +13,7 @@ const checkGridCoords = (gridCoordInput: string, marsRoverData: MarsRover): void
 	const isExpectedNumOfCoords = gridCoords.length === EXPECTED_NUM_OF_COORDS
 
 	if (!(isValidCoordFormat && isAboveZero && isExpectedNumOfCoords)) {
-		return prompt(msg.checkGridCoords.failure, checkGridCoords, marsRoverData);
+		prompt(msg.checkGridCoords.invalidFormat, checkGridCoords, marsRoverData);
 	} else {
 		const gridCoordsArr = gridCoords.map(coord => Number(coord))
 
@@ -23,7 +22,7 @@ const checkGridCoords = (gridCoordInput: string, marsRoverData: MarsRover): void
 			y: gridCoordsArr[1]
 		}
 	
-		return prompt(msg.checkGridCoords.success, checkNewRoverCoords, marsRoverData);
+		prompt(msg.checkGridCoords.success, checkNewRoverCoords, marsRoverData);
 	}
 }
 

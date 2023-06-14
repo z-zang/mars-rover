@@ -1,23 +1,88 @@
-import { VALID_DIRECTIONS } from '../../types';
+import * as ui from '../../ui/console';
+import printFinalRoverData from '../../steps/06_printFinalRoverData';
+import { MarsRover } from '../../types';
 
-import checkRoverDirections from '../../steps/04_checkRoverDirections';
+const mockPrint = jest.spyOn(ui, 'print').mockImplementation(() => {})
+const mockClear = jest.spyOn(ui, 'clear').mockImplementation(() => {})
+jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('process.exit'); });
 
-describe("checkRoverDirections function", () => {
-    /**
+afterEach(() => {    
+    jest.clearAllMocks();
+});
 
-        expect print to be called 1 + rovers.arraylength amount of times.
-        
-        expect process.exit(); to be called.
-    */
+describe("printFinalRoverData function", () => {
+    const marsRoverData1: MarsRover = {
+        gridCoords: { x: 10, y: 10 },
+        rovers: [
+            {
+                name: 'rover1',
+                positionArr: [
+                    { bearing: 'S', x: 8, y: 6 },
+                    { bearing: 'S', x: 3, y: 4 }
+                ]
+            },
+            {
+                name: 'rover2',
+                positionArr: [
+                    { bearing: 'E', x: 3, y: 3 },
+                    { bearing: 'W', x: 7, y: 8 }
+                ]
+            },
+        ]
+    }
+    const marsRoverData2: MarsRover = {
+        gridCoords: { x: 10, y: 10 },
+        rovers: [
+            {
+                name: 'rover1',
+                positionArr: [
+                    { bearing: 'S', x: 8, y: 6 },
+                    { bearing: 'S', x: 3, y: 4 }
+                ]
+            },
+            {
+                name: 'rover2',
+                positionArr: [
+                    { bearing: 'E', x: 3, y: 3 },
+                    { bearing: 'W', x: 7, y: 8 }
+                ]
+            },
+            {
+                name: 'rover3',
+                positionArr: [
+                    { bearing: 'E', x: 3, y: 3 },
+                    { bearing: 'W', x: 7, y: 8 }
+                ]
+            },
+            {
+                name: 'rover4',
+                positionArr: [
+                    { bearing: 'E', x: 3, y: 3 },
+                    { bearing: 'W', x: 7, y: 8 }
+                ]
+            },
+            {
+                name: 'rover5',
+                positionArr: [
+                    { bearing: 'E', x: 3, y: 3 },
+                    { bearing: 'W', x: 7, y: 8 }
+                ]
+            },
+        ]
+    }
+    
+    const expectedNumPrintCalls = 
+    describe("should call clear, print, and call process.exit", () => {
+        it('example 1', () => {
+            expect(() => printFinalRoverData(marsRoverData1)).toThrow('process.exit')
+            expect(mockClear).toHaveBeenCalledTimes(1)
+            expect(mockPrint).toHaveBeenCalledTimes(marsRoverData1.rovers.length + 1)
+        })
+        it('example 2', () => {
+            expect(() => printFinalRoverData(marsRoverData2)).toThrow('process.exit')
+            expect(mockClear).toHaveBeenCalledTimes(1)
+            expect(mockPrint).toHaveBeenCalledTimes(marsRoverData2.rovers.length + 1)
+        })
 
-    it("should return correct directional string after applying rotation", () => {
-    //     expect(processRotation('L', 'N', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('L', 'W', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('L', 'S', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('L', 'E', VALID_DIRECTIONS)).toBe('N');
-    //     expect(processRotation('R', 'N', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('R', 'E', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('R', 'S', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('R', 'W', VALID_DIRECTIONS)).toBe('N');
     });
 });

@@ -1,13 +1,21 @@
-import { marsRoverData } from '../../types';
 import * as ui from '../../ui/console';
 import { default as msg } from '../../messages';
+import { MarsRover } from '../../types';
 import checkGridCoords from '../../steps/01_checkGridCoords';
 import checkNewRoverCoords from '../../steps/02_checkNewRoverCoords';
 
-const spy = jest.spyOn(ui, 'prompt').mockImplementation(() => {})
+const mockPrompt = jest.spyOn(ui, 'prompt').mockImplementation(() => {})
+
+const marsRoverData: MarsRover = {
+	gridCoords: {
+		x: 0,
+		y: 0
+	},
+	rovers: []
+}
 
 let failureArgs = [
-    msg.checkGridCoords.failure,
+    msg.checkGridCoords.invalidFormat,
     checkGridCoords, 
     marsRoverData
 ]
@@ -22,32 +30,41 @@ let successData2 = {
     rovers: []
 }
 
+afterEach(() => {    
+    jest.clearAllMocks();
+});
+
 describe("checkGridCoords function", () => {
-    describe('should call prompt when passed incorrect string, with failure message, itself as fn(), and unmodified data', () => {
+    describe('should call prompt when passed incorrect string, with invalidFormat message, itself as fn(), and unmodified data', () => {
         it("alphabetic string", () => {
             checkGridCoords('asdfghjkl', marsRoverData)
-            expect(spy).toHaveBeenCalledWith(...failureArgs)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(...failureArgs)
         });
         it("numbers and other symbols", () => {
             checkGridCoords('1238$£(*^@3{]34234', marsRoverData)
-            expect(spy).toHaveBeenCalledWith(...failureArgs)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(...failureArgs)
         });
         it("incorrect amount of spaced numbers", () => {
             checkGridCoords('88 88 88', marsRoverData)
-            expect(spy).toHaveBeenCalledWith(...failureArgs)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(...failureArgs)
         });
         it("trailing whitespace", () => {
             checkGridCoords('88 88 ', marsRoverData)
-            expect(spy).toHaveBeenCalledWith(...failureArgs)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(...failureArgs)
         });
     })
 
-    // Note: success is partially based on EXPECTED_NUM_OF_COORDS, set in config.
+    // Note: success is based on EXPECTED_NUM_OF_COORDS, set in config.
     // it's currently set to expect 2 coordinates
     describe('should call success prompt when passed correct string, with success message, itself as fn(), and modified data', () => {
         it("valid string", () => {
             checkGridCoords("10 10", marsRoverData)
-            expect(spy).toHaveBeenCalledWith(
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(
                 msg.checkGridCoords.success,
                 checkNewRoverCoords,
                 successData1
@@ -55,7 +72,8 @@ describe("checkGridCoords function", () => {
         });
         it("valid large number", () => {
             checkGridCoords('384730 398674', marsRoverData)
-            expect(spy).toHaveBeenCalledWith(
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(
                 msg.checkGridCoords.success,
                 checkNewRoverCoords,
                 successData2

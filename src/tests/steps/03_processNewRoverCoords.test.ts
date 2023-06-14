@@ -1,23 +1,61 @@
-import { VALID_DIRECTIONS } from '../../types';
+import * as ui from '../../ui/console';
+import { default as msg } from '../../messages';
+import { Rover, MarsRover } from '../../types';
+import processNewRoverCoords from '../../steps/03_processNewRoverCoords';
+import checkRoverDirections from '../../steps/04_checkRoverDirections';
 
-import checkNewRoverCoords from '../../steps/02_checkNewRoverCoords';
+const mockPrompt = jest.spyOn(ui, 'prompt').mockImplementation(() => {})
+jest.mock('../../steps/04_checkRoverDirections', () => jest.fn());
 
-describe("checkNewRoverCoords function", () => {
-    /**
-    succes: should call
-    	return prompt(msg.processRoverCoords.success, checkRoverDirections, roverName, marsRoverData);
+const { success } = msg.processRoverCoords;
 
-    with a new rover added to marsRoverData after the function run.
-    */
+const marsTestData1: MarsRover = {
+	gridCoords: {
+		x: 10,
+		y: 10
+	},
+    rovers: [
+		{
+			name: 'rover-1',
+			positionArr: [
+				{x: 5, y: 5, bearing: 'N'},
+			]
+		},
+    ]
+}
 
-    it("should return correct directional string after applying rotation", () => {
-    //     expect(processRotation('L', 'N', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('L', 'W', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('L', 'S', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('L', 'E', VALID_DIRECTIONS)).toBe('N');
-    //     expect(processRotation('R', 'N', VALID_DIRECTIONS)).toBe('E');
-    //     expect(processRotation('R', 'E', VALID_DIRECTIONS)).toBe('S');
-    //     expect(processRotation('R', 'S', VALID_DIRECTIONS)).toBe('W');
-    //     expect(processRotation('R', 'W', VALID_DIRECTIONS)).toBe('N');
-    });
+const newRover1: Rover = {
+    name: 'rover-2',
+    positionArr: [
+        {bearing: 'N', x: 8, y: 8}
+    ]
+}
+
+const marsTestData2 = {...marsTestData1, rovers: [...marsTestData1.rovers, newRover1] }
+
+const newRover2: Rover = {
+    name: 'rover-3',
+    positionArr: [
+        {bearing: 'W', x: 3, y: 10}
+    ]
+}
+
+afterEach(() => {    
+    jest.clearAllMocks();
+});
+
+describe("processNewRoverCoords function", () => {
+    describe('should call prompt() with expected args with modified rover data', () => {
+        it("example 1", () => {
+            processNewRoverCoords({bearing: 'N', x: 8, y: 8}, marsTestData1)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(success, checkRoverDirections, newRover1.name, marsTestData2)
+        })
+        it("example 2", () => {
+
+            processNewRoverCoords({bearing: 'W', x: 3, y: 10}, marsTestData2)
+            expect(mockPrompt).toHaveBeenCalledTimes(1)
+            expect(mockPrompt).toHaveBeenCalledWith(success, checkRoverDirections, newRover2.name, {...marsTestData1, rovers: [...marsTestData1.rovers, newRover2] })
+        })
+    })
 });

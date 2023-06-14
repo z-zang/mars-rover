@@ -1,16 +1,14 @@
-import { clear, print, prompt } from './ui/console';
-import checkGridCoords from './steps/01_checkGridCoords';
-import { MarsRover, marsRoverData } from './types';
+import marsRoverStart from "./steps/00_marsRoverStart";
+import { MarsRover } from "./types";
 
-import { default as msg } from './messages';
-
-export const marsRoverStart = (marsRoverData: MarsRover): void => {
-	clear(false);
-	print('-----------------------------------');
-	print('|      Welcome to Mars Rover      |');
-	print('-----------------------------------');
-
-	prompt(msg.marsRoverStart.success, checkGridCoords, marsRoverData);
+// Initial program data.
+export const marsRoverData: MarsRover = {
+	gridCoords: {
+		x: 0,
+		y: 0
+	},
+	rovers: []
 }
 
 marsRoverStart(marsRoverData);
+

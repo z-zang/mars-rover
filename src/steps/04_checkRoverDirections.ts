@@ -8,10 +8,10 @@ const checkRoverDirections = (roverInstructInput: string, roverName: string, mar
 	const isValidRoverInstructFormat = roverDirectionRegex.test(roverInstructInput);
 
 	if (!isValidRoverInstructFormat) {
-		return prompt(msg.checkRoverDirections.failure, checkRoverDirections, roverName, marsRoverData);
-	} 
-	
-	return processRoverDirections(roverInstructInput, roverName, marsRoverData)
+		prompt(msg.checkRoverDirections.invalidFormat, checkRoverDirections, roverName, marsRoverData);
+	} else {
+		processRoverDirections(roverInstructInput, roverName, marsRoverData)
+	}
 }
 
 export default checkRoverDirections
