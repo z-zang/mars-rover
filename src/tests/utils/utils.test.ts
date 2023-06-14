@@ -1,4 +1,4 @@
-import { VALID_DIRECTIONS } from '../types';
+import { VALID_DIRECTIONS } from '../../types';
 
 import { 
     processRotation, 
@@ -7,7 +7,7 @@ import {
     getOtherRoversCoordsArray,
     checkDoesNotClashWithRovers,
     processRoverInstruct,
-} from '../utils/utils'
+} from '../../utils/utils'
 
 describe("processRotation function", () => {
     it("should return correct directional string after applying rotation", () => {

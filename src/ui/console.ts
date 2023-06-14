@@ -17,8 +17,8 @@ const reader = readline.createInterface({
 	output: process.stdout,
 });
 
-export function prompt(question: string, callback: (arg: string) => void, deleteNextLine: boolean = true) {
-	// if (deleteNextLine === true) readline.moveCursor(process.stdout, 0, -1);
+export function prompt(question: string, callback: (...args: any) => void, ...rest: any[]): void {
+	readline.moveCursor(process.stdout, 0, -1); // delete reprint of input
 
-	reader.question(`\n❓ ${question} \n\n👉 `, callback);
+	reader.question(`\n❓ ${question} \n\n👉 `, (answer: string) => callback(answer, ...rest));
 }

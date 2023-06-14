@@ -20,5 +20,7 @@ Future considerations:
 - save positions in an array, in case we want a tracking of all the places the rovers have been :D 
 - throw error in process instruct - this prevents needing the entire loop to continue if there is an error (improves performance)
 
+
 technical aspects I wish I had more time for:
 - being able to derive a regex from the string types, or otherwise linking the valid strings to the regex i used to test the user inputs. I think that's one of the biggest parts that's not extensible
+- not sure if should pass marsRoverData in to each function (for clean code) or if should just import at top of each file?
